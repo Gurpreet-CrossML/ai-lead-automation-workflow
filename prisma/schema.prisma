@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model lead_data {
+  zoominfo_contact_id    BigInt    @id
+  first_name             String?   @db.VarChar(100)
+  last_name              String?   @db.VarChar(100)
+  middle_name            String?   @db.VarChar(100)
+  salutation             String?   @db.VarChar(50)
+  suffix                 String?   @db.VarChar(50)
+  job_title              String?   @db.VarChar(200)
+  management_level       String?   @db.VarChar(50)
+  company_name           String?   @db.VarChar(200)
+  company_website        String?   @db.VarChar(200)
+  direct_phone           String?   @db.VarChar(50)
+  mobile_phone           String?   @db.VarChar(50)
+  email                  String?   @db.VarChar(150)
+  email_domain           String?   @db.VarChar(100)
+  linkedin_profile_url   String?   @db.VarChar(200)
+  contact_accuracy_score Int?
+  contact_accuracy_grade String?   @db.VarChar(10)
+  job_start_date         DateTime? @db.Date
+  country                String?   @db.VarChar(100)
+  city                   String?   @db.VarChar(100)
+  state                  String?   @db.VarChar(100)
+  zip_code               String?   @db.VarChar(20)
+  status                 String?   @db.VarChar(50) @default("new")
+  last_email_sent_at     DateTime?
+  last_replied_at        DateTime?
+  follow_up_count        Int?      @default(0)
+  thread_id              String?   @db.VarChar(200)
+  next_follow_up_at      DateTime?
+  meeting_scheduled_at   DateTime?
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+}
