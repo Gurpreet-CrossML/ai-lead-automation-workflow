@@ -55,7 +55,7 @@ export default function RootLayout({ children }) {
 
           <div className="p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-neutral-800">
             <p className="font-semibold mb-1">© 2025 Lead Tracker</p>
-            <p className="text-[10px]">Powered by Next.js</p>
+            <p className="text-[10px]">Powered by Crossml</p>
           </div>
         </aside>
 
