@@ -8,35 +8,68 @@ datasource db {
 }
 
 model lead_data {
-  zoominfo_contact_id    BigInt    @id
-  first_name             String?   @db.VarChar(100)
-  last_name              String?   @db.VarChar(100)
-  middle_name            String?   @db.VarChar(100)
-  salutation             String?   @db.VarChar(50)
-  suffix                 String?   @db.VarChar(50)
-  job_title              String?   @db.VarChar(200)
-  management_level       String?   @db.VarChar(50)
-  company_name           String?   @db.VarChar(200)
-  company_website        String?   @db.VarChar(200)
-  direct_phone           String?   @db.VarChar(50)
-  mobile_phone           String?   @db.VarChar(50)
-  email                  String?   @db.VarChar(150)
-  email_domain           String?   @db.VarChar(100)
-  linkedin_profile_url   String?   @db.VarChar(200)
+  zoominfo_contact_id            BigInt      @id
+  last_name                      String?     @db.VarChar(100)
+  first_name                     String?     @db.VarChar(100)
+  middle_name                    String?     @db.VarChar(100)
+  salutation                     String?     @db.VarChar(50)
+  suffix                         String?     @db.VarChar(50)
+  job_title                      String?     @db.VarChar(200)
+  management_level                String?     @db.VarChar(100)
+  job_function                   String?     @db.VarChar(150)
+  department                     String?     @db.VarChar(150)
+  direct_phone_number             String?     @db.VarChar(50)
+  email_address                   String?     @db.VarChar(150)
+  mobile_phone                    String?     @db.VarChar(50)
+  zoominfo_contact_profile_url    String?     @db.VarChar(300)
+  linkedin_contact_profile_url    String?     @db.VarChar(300)
+  person_street                   String?     @db.VarChar(200)
+  person_city                     String?     @db.VarChar(100)
+  person_state                    String?     @db.VarChar(100)
+  person_zip_code                 String?     @db.VarChar(20)
+  country                         String?     @db.VarChar(100)
+  zoominfo_company_id             BigInt?
+  company_name                    String?     @db.VarChar(200)
+  company_website                 String?     @db.VarChar(200)
+  founded_year                    Int?
+  primary_industry                String?     @db.VarChar(150)
+  primary_sub_industry            String?     @db.VarChar(150)
+  all_industries                  String?     @db.Text
+  all_sub_industries              String?     @db.Text
+  industry_hierarchical_category  String?     @db.VarChar(200)
+  secondary_industry_hierarchical_category String? @db.VarChar(200)
+  zoominfo_company_profile_url    String?     @db.VarChar(300)
+  linkedin_company_profile_url    String?     @db.VarChar(300)
+  facebook_company_profile_url    String?     @db.VarChar(300)
+  twitter_company_profile_url     String?     @db.VarChar(300)
+  ownership_type                  String?     @db.VarChar(100)
+  business_model                  String?     @db.VarChar(100)
+  certified_active_company        Boolean?    @default(false)
+  full_address                    String?     @db.VarChar(300)
+
+  created_at                      DateTime    @default(now())
+  updated_at                      DateTime    @default(now()) @updatedAt
+
+  // Relation to lead_status
+  status_info lead_status?
+}
+
+model lead_status {
+  id                     Int        @id @default(autoincrement())
+  zoominfo_contact_id    BigInt     @unique
+  status                 String?    @default("new") @db.VarChar(50)
   contact_accuracy_score Int?
-  contact_accuracy_grade String?   @db.VarChar(10)
-  job_start_date         DateTime? @db.Date
-  country                String?   @db.VarChar(100)
-  city                   String?   @db.VarChar(100)
-  state                  String?   @db.VarChar(100)
-  zip_code               String?   @db.VarChar(20)
-  status                 String?   @db.VarChar(50) @default("new")
+  contact_accuracy_grade String?    @db.VarChar(10)
+  job_start_date         DateTime?  @db.Date
   last_email_sent_at     DateTime?
   last_replied_at        DateTime?
-  follow_up_count        Int?      @default(0)
-  thread_id              String?   @db.VarChar(200)
+  follow_up_count        Int?       @default(0)
+  thread_id              String?    @db.VarChar(200)
   next_follow_up_at      DateTime?
   meeting_scheduled_at   DateTime?
-  created_at             DateTime  @default(now())
-  updated_at             DateTime  @updatedAt
+  created_at             DateTime   @default(now())
+  updated_at             DateTime   @default(now()) @updatedAt
+
+  // Relation back to lead_data
+  lead_data lead_data @relation(fields: [zoominfo_contact_id], references: [zoominfo_contact_id], onDelete: Cascade)
 }
