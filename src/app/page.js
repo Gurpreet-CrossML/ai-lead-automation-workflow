@@ -1,22 +1,22 @@
 "use client"
 
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {LeadDetailsModal} from "@/components/LeadDetailsModal"
 import { 
   RefreshCcw, Mail, Eye, Reply, Calendar, Clock, AlertCircle, Users, 
   BarChart3, Send, MessageSquare, CheckCircle, XCircle, Search, 
   TrendingUp, Filter, Download
-} from "lucide-react"
-import { useState, useEffect, useMemo } from "react"
-import Link from "next/link"
+} 
 
+from "lucide-react";
 // --- Helper function to format status ---
 const formatStatusLabel = (status) => {
   if (!status) return 'New Lead'
-  // Convert snake_case to Title Case
   return status
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -72,7 +72,6 @@ function LeadStatusBadge({ status = 'new', followUpCount = 0 }) {
   const config = STATUS_CONFIG[status] || STATUS_CONFIG['new']
   const Icon = config.icon
   
-  // Use the actual status from API, formatted
   let label = formatStatusLabel(status)
   if (status === 'follow_up_sent' && followUpCount > 0) {
     label = `Follow Up ${followUpCount} Sent`
@@ -99,13 +98,15 @@ const formatDate = (dateString) => {
 }
 
 // --- Main Dashboard Component ---
-export default function LeadDashboard() {
+const Index = () => {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [leads, setLeads] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [selectedLead, setSelectedLead] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const fetchLeads = async () => {
     try {
@@ -155,6 +156,11 @@ export default function LeadDashboard() {
     setIsRefreshing(false)
   }
 
+  const handleViewDetails = (lead) => {
+    setSelectedLead(lead)
+    setIsModalOpen(true)
+  }
+
   const stats = useMemo(() => {
     const statsData = leads.reduce((acc, lead) => {
       const status = lead.status || 'new'
@@ -174,8 +180,8 @@ export default function LeadDashboard() {
       totalFollowUps: 0
     })
 
-    const replyRate = leads.length > 0 ? ((statsData.hasReplies / leads.length) * 100).toFixed(1) : 0
-    const meetingRate = leads.length > 0 ? ((statsData.hasMeetings / leads.length) * 100).toFixed(1) : 0
+    const replyRateNum = leads.length > 0 ? (statsData.hasReplies / leads.length) * 100 : 0
+    const meetingRateNum = leads.length > 0 ? (statsData.hasMeetings / leads.length) * 100 : 0
 
     return [
       { 
@@ -216,12 +222,12 @@ export default function LeadDashboard() {
       },
       { 
         label: "Reply Rate", 
-        value: `${replyRate}%`, 
+        value: `${replyRateNum.toFixed(1)}%`, 
         icon: MessageSquare, 
         color: "text-green-600 dark:text-green-400", 
         bgColor: "bg-green-50 dark:bg-green-950/50",
         border: "border-green-200 dark:border-green-900",
-        trend: replyRate > 20 ? "up" : null
+        trend: replyRateNum > 20 ? "up" : null
       },
       { 
         label: "Pending Reply", 
@@ -243,12 +249,12 @@ export default function LeadDashboard() {
       },
       { 
         label: "Meeting Rate", 
-        value: `${meetingRate}%`, 
+        value: `${meetingRateNum.toFixed(1)}%`, 
         icon: TrendingUp, 
         color: "text-purple-600 dark:text-purple-400", 
         bgColor: "bg-purple-50 dark:bg-purple-950/50",
         border: "border-purple-200 dark:border-purple-900",
-        trend: meetingRate > 10 ? "up" : null
+        trend: meetingRateNum > 10 ? "up" : null
       },
     ]
   }, [leads])
@@ -421,7 +427,7 @@ export default function LeadDashboard() {
                   <tbody className="divide-y divide-gray-200 dark:divide-neutral-800">
                     {loading ? (
                       <tr>
-                        <td colSpan="7" className="px-6 py-20 text-center">
+                        <td colSpan={7} className="px-6 py-20 text-center">
                           <div className="flex flex-col items-center gap-4">
                             <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center">
                               <RefreshCcw className="h-6 w-6 animate-spin text-blue-600 dark:text-blue-400" />
@@ -432,7 +438,7 @@ export default function LeadDashboard() {
                       </tr>
                     ) : error ? (
                       <tr>
-                        <td colSpan="7">
+                        <td colSpan={7}>
                           <div className="p-20 text-center">
                             <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-950 mb-4">
                               <AlertCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
@@ -455,7 +461,7 @@ export default function LeadDashboard() {
                       </tr>
                     ) : leads.length === 0 ? (
                       <tr>
-                        <td colSpan="7">
+                        <td colSpan={7}>
                           <div className="p-20 text-center">
                             <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800 mb-6">
                               <BarChart3 className="h-10 w-10 text-gray-400 dark:text-gray-600" />
@@ -466,18 +472,16 @@ export default function LeadDashboard() {
                             <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
                               Upload your first batch of leads to start the automated workflow
                             </p>
-                            <Link href="/lead-upload">
-                              <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all">
-                                <Users className="h-4 w-4 mr-2" />
-                                Upload Leads Now
-                              </Button>
-                            </Link>
+                            <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all">
+                              <Users className="h-4 w-4 mr-2" />
+                              Upload Leads Now
+                            </Button>
                           </div>
                         </td>
                       </tr>
                     ) : filteredLeads.length === 0 ? (
                       <tr>
-                        <td colSpan="7">
+                        <td colSpan={7}>
                            <div className="p-20 text-center">
                             <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800 mb-6">
                               <Search className="h-10 w-10 text-gray-400 dark:text-gray-600" />
@@ -613,12 +617,15 @@ export default function LeadDashboard() {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-center">
-                            <Link href={`/leads/${lead.zoominfo_contact_id}`}>
-                              <Button variant="outline" size="sm" className="gap-1.5 border-gray-300 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 hover:border-blue-500 dark:hover:border-blue-500 transition-all">
-                                <Eye className="h-4 w-4" />
-                                View Details
-                              </Button>
-                            </Link>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="gap-1.5 border-gray-300 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 hover:border-blue-500 dark:hover:border-blue-500 transition-all"
+                              onClick={() => handleViewDetails(lead)}
+                            >
+                              <Eye className="h-4 w-4" />
+                              View Details
+                            </Button>
                           </td>
                         </tr>
                       ))
@@ -630,6 +637,15 @@ export default function LeadDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Lead Details Modal */}
+      <LeadDetailsModal 
+        lead={selectedLead}
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+      />
     </div>
   )
 }
+
+export default Index;

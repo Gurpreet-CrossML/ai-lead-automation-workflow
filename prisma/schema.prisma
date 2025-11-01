@@ -50,8 +50,9 @@ model lead_data {
   created_at                      DateTime    @default(now())
   updated_at                      DateTime    @default(now()) @updatedAt
 
-  // Relation to lead_status
-  status_info lead_status?
+  // Relations
+  status_info  lead_status?
+  email_summaries email_summary[] // one-to-many relation
 }
 
 model lead_status {
@@ -71,5 +72,22 @@ model lead_status {
   updated_at             DateTime   @default(now()) @updatedAt
 
   // Relation back to lead_data
+  lead_data lead_data @relation(fields: [zoominfo_contact_id], references: [zoominfo_contact_id], onDelete: Cascade)
+}
+
+model email_summary {
+  id                   Int       @id @default(autoincrement())
+  zoominfo_contact_id  BigInt
+  name                 String?   @db.VarChar(200) // Combined name from lead_data
+  email                String?   @db.VarChar(150)
+  thread_id            String?   @db.VarChar(200)
+  email_body_summary   String?   @db.Text
+  sentiment            String?   @db.VarChar(50)
+  category             String?   @db.VarChar(100)
+  summary_generated_at DateTime  @default(now())
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @default(now()) @updatedAt
+
+  // Relation to lead_data
   lead_data lead_data @relation(fields: [zoominfo_contact_id], references: [zoominfo_contact_id], onDelete: Cascade)
 }

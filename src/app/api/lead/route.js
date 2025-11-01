@@ -46,7 +46,12 @@ export async function GET() {
         zoominfo_contact_id: 'desc'
       },
       include: {
-        status_info: true // Include the related status information
+        status_info: true, // Include the related status information
+        email_summaries: {  // Include email summaries
+          orderBy: {
+            summary_generated_at: 'desc' // Most recent first
+          }
+        }
       }
     });
     
