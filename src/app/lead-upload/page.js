@@ -18,8 +18,6 @@ export default function LeadUpload() {
   const [duplicates, setDuplicates] = useState([]);
   const [newLeads, setNewLeads] = useState([]);
 
-  const WEBHOOK_URL = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
-
   const handleFileChange = async (e) => {
     const selectedFile = e.target.files?.[0];
     e.target.value = "";
@@ -86,25 +84,20 @@ export default function LeadUpload() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch(WEBHOOK_URL, {
+      // Call our Next.js API route instead of webhook directly
+      const res = await fetch('/api/upload-leads', {
         method: "POST",
         body: formData,
       });
 
-      let resultText = await res.text();
-      console.log("📥 Webhook Response:", resultText);
+      const resultData = await res.json();
+      console.log("📥 API Response:", resultData);
 
       if (res.ok) {
-        let parsed;
-        try {
-          parsed = JSON.parse(resultText);
-        } catch {
-          parsed = null;
-        }
-
-        if (Array.isArray(parsed)) {
-          const summaryObj = parsed.find((item) => item.summary);
-          const records = parsed.filter((item) => item.status || (!item.summary && !item.message));
+        // Handle array response format
+        if (Array.isArray(resultData)) {
+          const summaryObj = resultData.find((item) => item.summary);
+          const records = resultData.filter((item) => item.status || (!item.summary && !item.message));
           const duplicateRecords = records.filter((item) => item.status === "duplicate");
           const newRecords = records.filter((item) => item.status !== "duplicate" && item.status);
 
@@ -120,11 +113,24 @@ export default function LeadUpload() {
           } else {
             setMessage("✅ Upload finished, but summary missing.");
           }
-        } else if (parsed?.response?.summary) {
-          setUploadSummary(parsed.response.summary);
-          setDuplicates(parsed.response.duplicateRecords || []);
-          setNewLeads(parsed.response.newRecords || []);
-          setMessage(parsed.response.message || "✅ Upload complete!");
+        } 
+        // Handle nested response format
+        else if (resultData?.response?.summary) {
+          setUploadSummary(resultData.response.summary);
+          setDuplicates(resultData.response.duplicateRecords || []);
+          setNewLeads(resultData.response.newRecords || []);
+          setMessage(resultData.response.message || "✅ Upload complete!");
+
+          setHeaders([]);
+          setAllData([]);
+          setPreview([]);
+        } 
+        // Handle direct summary format
+        else if (resultData?.summary) {
+          setUploadSummary(resultData.summary);
+          setDuplicates(resultData.duplicateRecords || []);
+          setNewLeads(resultData.newRecords || []);
+          setMessage(resultData.message || "✅ Upload complete!");
 
           setHeaders([]);
           setAllData([]);
@@ -133,7 +139,7 @@ export default function LeadUpload() {
           setMessage("✅ Upload finished, but summary missing.");
         }
       } else {
-        setMessage("❌ Upload failed. Check webhook configuration.");
+        setMessage(`❌ Upload failed: ${resultData.error || 'Unknown error'}`);
       }
     } catch (err) {
       setMessage("⚠️ Error: " + err.message);
