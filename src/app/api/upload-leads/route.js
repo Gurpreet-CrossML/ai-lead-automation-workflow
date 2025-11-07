@@ -1,5 +1,5 @@
 // File: app/api/upload-leads/route.js
-// Alternative version using axios
+// Alternative version using axios with file type validation
 
 import { NextResponse } from 'next/server';
 import axios from 'axios';
@@ -9,6 +9,19 @@ const WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
+
+// Allowed file extensions and MIME types
+const ALLOWED_EXTENSIONS = ['.csv', '.xls', '.xlsx'];
+const ALLOWED_MIME_TYPES = [
+  'text/csv',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/csv',
+  'text/x-csv',
+  'application/x-csv',
+  'text/comma-separated-values',
+  'text/x-comma-separated-values'
+];
 
 // Create a custom http agent with specific settings
 const httpAgent = new http.Agent({
@@ -41,7 +54,31 @@ export async function POST(request) {
       );
     }
 
+    // Validate file type by extension
+    const fileName = file.name.toLowerCase();
+    const hasValidExtension = ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext));
+    
+    if (!hasValidExtension) {
+      console.log('❌ Invalid file type:', fileName);
+      return NextResponse.json(
+        { 
+          error: 'Invalid file type',
+          message: 'Only Excel (.xls, .xlsx) and CSV (.csv) files are allowed',
+          allowedTypes: ALLOWED_EXTENSIONS
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate MIME type (additional check)
+    const mimeType = file.type;
+    if (mimeType && !ALLOWED_MIME_TYPES.includes(mimeType)) {
+      console.log('⚠️ Warning: MIME type mismatch:', mimeType);
+      // Note: Some browsers may not send correct MIME types, so we log but don't block
+    }
+
     console.log('📁 File received:', file.name, `(${file.size} bytes)`);
+    console.log('✅ File type validated:', fileName.split('.').pop().toUpperCase());
     console.log('🔄 Forwarding to n8n webhook...');
 
     // Convert file to buffer
@@ -102,7 +139,7 @@ export async function POST(request) {
       if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
         return NextResponse.json(
           { 
-            error: 'Request timeout', 
+            error: 'Request timeout',
             message: 'The webhook took too long to respond',
             details: 'Connection timeout after 30 seconds'
           },
@@ -123,7 +160,7 @@ export async function POST(request) {
     
     return NextResponse.json(
       { 
-        error: 'Internal server error', 
+        error: 'Internal server error',
         message: error.message,
         code: error.code
       },
@@ -133,10 +170,11 @@ export async function POST(request) {
 }
 
 export async function GET() {
-  return NextResponse.json({ 
+  return NextResponse.json({
     status: 'API route is working',
     webhookConfigured: !!WEBHOOK_URL,
     webhookUrl: WEBHOOK_URL,
+    allowedFileTypes: ALLOWED_EXTENSIONS,
     timestamp: new Date().toISOString()
   });
 }
