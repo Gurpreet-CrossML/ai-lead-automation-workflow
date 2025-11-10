@@ -45,10 +45,20 @@ const STATUS_CONFIG = {
     color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
     dotColor: 'bg-green-500'
   },
-  'proposal_accepted': { 
+  'proposal accepted - meeting link sent': { 
     icon: CheckCircle, 
     color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
     dotColor: 'bg-emerald-500'
+  },
+  'meeting scheduled': { 
+    icon: Calendar, 
+    color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
+    dotColor: 'bg-emerald-500'
+  },
+   'proposal rejected': { 
+  icon: XCircle, 
+  color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-md px-3 py-1 font-medium',
+  dotColor: 'bg-red-500'
   },
   'follow_up_sent': { 
     icon: Reply, 
@@ -307,13 +317,7 @@ const Index = () => {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <Button 
-                variant="outline"
-                className="gap-2 border-gray-300 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800"
-              >
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
+              
               <Button 
                 onClick={handleRefresh} 
                 className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"

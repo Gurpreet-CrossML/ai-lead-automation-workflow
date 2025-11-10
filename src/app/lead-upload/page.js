@@ -111,7 +111,7 @@ export default function LeadUpload() {
             setAllData([]);
             setPreview([]);
           } else {
-            setMessage("✅ Upload finished, but summary missing.");
+            setMessage("✅ Upload finished");
           }
         } 
         // Handle nested response format
