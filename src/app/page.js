@@ -214,7 +214,6 @@ const Index = () => {
         color: "text-emerald-600 dark:text-emerald-400", 
         bgColor: "bg-emerald-50 dark:bg-emerald-950/50",
         border: "border-emerald-200 dark:border-emerald-900",
-        trend: statsData.hasMeetings > 0 ? "up" : null
       },
     ]
   }, [leads])

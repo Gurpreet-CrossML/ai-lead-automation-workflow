@@ -17,6 +17,7 @@ export default function LeadUpload() {
   const [uploadSummary, setUploadSummary] = useState(null);
   const [duplicates, setDuplicates] = useState([]);
   const [newLeads, setNewLeads] = useState([]);
+  const [invalidRecords, setInvalidRecords] = useState([]);
 
   const handleFileChange = async (e) => {
     const selectedFile = e.target.files?.[0];
@@ -27,6 +28,7 @@ export default function LeadUpload() {
     setUploadSummary(null);
     setDuplicates([]);
     setNewLeads([]);
+  setInvalidRecords([]);
 
     if (!selectedFile) return;
 
@@ -136,7 +138,45 @@ export default function LeadUpload() {
           setAllData([]);
           setPreview([]);
         } else {
-          setMessage("✅ Upload finished, but summary missing.");
+          // More robust detection for validation errors from various backend shapes
+          const hasInvalidArray = Array.isArray(resultData.invalidRecords) || Array.isArray(resultData.invalid_records) || Array.isArray(resultData.invalid_records || resultData.invalid);
+          const hasTotalInvalid = typeof resultData.totalInvalid === 'number' && resultData.totalInvalid > 0;
+          const hasValidationFlag = resultData._validation && resultData._validation.isValid === false;
+          const statusIsError = typeof resultData.status === 'string' && resultData.status.toLowerCase() === 'error';
+
+          if (hasInvalidArray || hasTotalInvalid || hasValidationFlag || statusIsError) {
+            // collect raw invalid entries from possible keys; accept single object too
+            let rawInvalid = resultData.invalidRecords || resultData.invalid_records || resultData.invalid || [];
+            if (rawInvalid && !Array.isArray(rawInvalid) && typeof rawInvalid === 'object') {
+              rawInvalid = [rawInvalid];
+            }
+
+            // If no explicit array but there is a top-level _validation and the original payload (single record) exists,
+            // attempt to extract a record-like object
+            if ((!rawInvalid || rawInvalid.length === 0) && resultData._validation && resultData._validation.isValid === false) {
+              // try to find fields on root resultData to build a single invalid record
+              rawInvalid = [resultData];
+            }
+
+            const normalized = (rawInvalid || []).map((rec) => ({
+              name: [rec.first_name || rec.firstName || rec.first_name || rec.firstName || '', rec.middle_name || rec.middleName || '', rec.last_name || rec.lastName || '']
+                .filter(Boolean)
+                .join(' '),
+              email: rec.email_address || rec.email || rec.emailAddress || null,
+              company: rec.company_name || rec.company || null,
+              missingFields: rec.missingFields || rec.missing_fields || rec._validation?.missingFields || rec._validation?.missing_fields || rec._validation?.missing || []
+            }));
+
+            setInvalidRecords(normalized);
+            setMessage(resultData.message || '⚠️ Validation errors in file');
+
+            // clear preview to match other branches (can be changed if you prefer to keep it)
+            setHeaders([]);
+            setAllData([]);
+            setPreview([]);
+          } else {
+            setMessage("✅ Upload finished, but summary missing.");
+          }
         }
       } else {
         setMessage(`❌ Upload failed: ${resultData.error || 'Unknown error'}`);
@@ -160,8 +200,8 @@ export default function LeadUpload() {
             Upload Leads
           </h1>
           <p className="text-muted-foreground text-sm md:text-base">
-            Upload your leads via CSV or Excel file. Ensure your file has an{" "}
-            <code className="px-2 py-1 bg-muted rounded text-xs font-mono">email</code> column.
+            Upload your leads via CSV or Excel file. Ensure your file has an Email column
+            
           </p>
         </div>
 
@@ -230,6 +270,43 @@ export default function LeadUpload() {
             )}
             <span>{message}</span>
           </div>
+        )}
+
+        {/* Invalid Records (show even when uploadSummary is not present) */}
+        {invalidRecords.length > 0 && (
+          <Card className="border-0 shadow-xl bg-red-50/40">
+            <CardHeader>
+              <CardTitle className="text-lg font-bold">Invalid Records</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-auto max-h-[500px] rounded-lg border">
+                <table className="w-full text-sm border-collapse">
+                  <thead className="bg-muted sticky top-0 z-10">
+                    <tr>
+                      <th className="px-4 py-2 text-left font-semibold">#</th>
+                      <th className="px-4 py-2 text-left font-semibold">Name</th>
+                      <th className="px-4 py-2 text-left font-semibold">Email</th>
+                      <th className="px-4 py-2 text-left font-semibold">Company</th>
+                      <th className="px-4 py-2 text-left font-semibold">Missing Fields</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invalidRecords.map((rec, i) => (
+                      <tr key={i} className="border-b hover:bg-accent/50">
+                        <td className="px-4 py-2 text-muted-foreground">{i + 1}</td>
+                        <td className="px-4 py-2">{rec.name || "-"}</td>
+                        <td className="px-4 py-2">{rec.email || "-"}</td>
+                        <td className="px-4 py-2">{rec.company || "-"}</td>
+                        <td className="px-4 py-2 text-red-600 dark:text-red-400">
+                          {(rec.missingFields || []).join(', ')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Upload Summary */}
@@ -327,6 +404,8 @@ export default function LeadUpload() {
                   </div>
                 </div>
               )}
+
+              
             </CardContent>
           </Card>
         )}
