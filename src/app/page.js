@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useMemo } from "react";
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -117,6 +118,7 @@ const Index = () => {
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedLead, setSelectedLead] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const router = useRouter()
 
   const fetchLeads = async () => {
     try {
@@ -176,22 +178,15 @@ const Index = () => {
       const status = lead.status || 'new'
       acc.statusCounts[status] = (acc.statusCounts[status] || 0) + 1
       
-      if (lead.contact_accuracy_grade === 'A') acc.highAccuracy++
       if (lead.last_replied_at) acc.hasReplies++
       if (lead.meeting_scheduled_at) acc.hasMeetings++
-      acc.totalFollowUps += (lead.follow_up_count || 0)
       
       return acc
     }, {
       statusCounts: {},
-      highAccuracy: 0,
       hasReplies: 0,
-      hasMeetings: 0,
-      totalFollowUps: 0
+      hasMeetings: 0
     })
-
-    const replyRateNum = leads.length > 0 ? (statsData.hasReplies / leads.length) * 100 : 0
-    const meetingRateNum = leads.length > 0 ? (statsData.hasMeetings / leads.length) * 100 : 0
 
     return [
       { 
@@ -204,48 +199,12 @@ const Index = () => {
         trend: null
       },
       { 
-        label: "High Accuracy", 
-        value: statsData.highAccuracy, 
-        icon: CheckCircle, 
-        color: "text-green-600 dark:text-green-400", 
-        bgColor: "bg-green-50 dark:bg-green-950/50",
-        border: "border-green-200 dark:border-green-900",
-        trend: null
-      },
-      { 
-        label: "New Leads", 
-        value: statsData.statusCounts['new'] || 0, 
-        icon: Users, 
-        color: "text-slate-600 dark:text-slate-400", 
-        bgColor: "bg-slate-50 dark:bg-slate-950/50",
-        border: "border-slate-200 dark:border-slate-800",
-        trend: null
-      },
-      { 
         label: "Emails Sent", 
         value: statsData.statusCounts['email_sent'] || 0, 
         icon: Send, 
         color: "text-blue-600 dark:text-blue-400", 
         bgColor: "bg-blue-50 dark:bg-blue-950/50",
         border: "border-blue-200 dark:border-blue-900",
-        trend: null
-      },
-      { 
-        label: "Reply Rate", 
-        value: `${replyRateNum.toFixed(1)}%`, 
-        icon: MessageSquare, 
-        color: "text-green-600 dark:text-green-400", 
-        bgColor: "bg-green-50 dark:bg-green-950/50",
-        border: "border-green-200 dark:border-green-900",
-        trend: replyRateNum > 20 ? "up" : null
-      },
-      { 
-        label: "Pending Reply", 
-        value: statsData.statusCounts['pending_reply'] || 0, 
-        icon: Clock, 
-        color: "text-yellow-600 dark:text-yellow-400", 
-        bgColor: "bg-yellow-50 dark:bg-yellow-950/50",
-        border: "border-yellow-200 dark:border-yellow-900",
         trend: null
       },
       { 
@@ -256,15 +215,6 @@ const Index = () => {
         bgColor: "bg-emerald-50 dark:bg-emerald-950/50",
         border: "border-emerald-200 dark:border-emerald-900",
         trend: statsData.hasMeetings > 0 ? "up" : null
-      },
-      { 
-        label: "Meeting Rate", 
-        value: `${meetingRateNum.toFixed(1)}%`, 
-        icon: TrendingUp, 
-        color: "text-purple-600 dark:text-purple-400", 
-        bgColor: "bg-purple-50 dark:bg-purple-950/50",
-        border: "border-purple-200 dark:border-purple-900",
-        trend: meetingRateNum > 10 ? "up" : null
       },
     ]
   }, [leads])
@@ -331,7 +281,7 @@ const Index = () => {
         </div>
 
         {/* Enhanced Stats Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {stats.map((item) => (
             <Card 
               key={item.label} 
@@ -476,7 +426,7 @@ const Index = () => {
                             <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
                               Upload your first batch of leads to start the automated workflow
                             </p>
-                            <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all">
+                            <Button onClick={() => router.push('/lead-upload')} className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all">
                               <Users className="h-4 w-4 mr-2" />
                               Upload Leads Now
                             </Button>
