@@ -288,7 +288,7 @@ const Index = () => {
             >
               <div className={`absolute top-0 right-0 w-32 h-32 ${item.bgColor} opacity-40 rounded-bl-full`}></div>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-                <CardTitle className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-200 tracking-wide">
                   {item.label}
                 </CardTitle>
                 <div className={`${item.bgColor} p-2 rounded-lg shadow-sm transition-transform group-hover:scale-110`}>
@@ -297,7 +297,7 @@ const Index = () => {
               </CardHeader>
               <CardContent className="relative z-10">
                 <div className="flex items-end justify-between">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="text-4xl font-extrabold text-gray-900 dark:text-white">
                     {item.value}
                   </div>
                   {item.trend === "up" && (
